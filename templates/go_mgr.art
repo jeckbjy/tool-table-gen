@@ -1,0 +1,9 @@
+// This file is generaetd automatically, DO NOT modify this file manually.
+
+package tables
+
+func Load(path string) {
+{{each Tables table}}
+    Load{{table.NameUpper}}(path)
+{{/each}}
+}

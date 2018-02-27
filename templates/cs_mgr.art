@@ -1,0 +1,102 @@
+// This file is generaetd automatically, DO NOT modify this file manually.
+using System;
+using System.Collections.Generic;
+using System.Collections;
+using UnityEngine;
+using System.IO;
+
+public interface ZTableInterface {
+    void LoadTable(string content);
+}
+
+public sealed class ZTableException : IOException {
+	
+	internal ZTableException(string message) : base(message) {}
+	
+	internal static ZTableException ErrorReader(String fort, params object[] args) {
+		String error = String.Format(fort, args);
+		return new ZTableException(error);
+	}
+}
+
+[Serializable]
+public class ZTableManager {
+    private static ZTableManager _instance;
+    public static ZTableManager Instance {
+        get {
+            if (_instance == null) {
+                _instance = new ZTableManager();
+            }
+            return _instance;
+        }
+    }
+
+    private Dictionary<string, ZTableInterface> _tableDict;
+
+    private ZTableManager() {
+        _tableDict = new Dictionary<string, ZTableInterface>();
+		{{each Tables table}}
+        Create<ZTable{{table.NameUpper}}>({{table.Name}}, ref _table{{table.NameUpper}})
+        {{/each}}
+    }
+
+    private Create<T>(name string, ref T table) where T : ZTableInterface, new() {
+        table = new T()
+        _tableDict.Add(name, table)
+    }
+
+    public void LoadOneTable(string name, string content) {
+        if (_tableDict.ContainsKey(name)) {
+            _tableDict[name].LoadTable(content);
+        }
+    }
+
+    public void LoadTables (AssetBundle bundle) {
+        foreach (KeyValuePair<string, ZTableInterface> kv in _tableDict) {
+            string fileName = kv.Key;
+            TextAsset asset = bundle.LoadAsset(fileName, typeof(TextAsset)) as TextAsset;
+            if (asset == null) {
+                Debug.LogError("Table not found: " + fileName);
+                continue;
+            }
+            kv.Value.LoadTable(asset.text);
+        }
+    }
+
+    public void AddLoadTableTasks(string filepath, Queue<Action> tasks){
+        foreach (KeyValuePair<string, ZTableInterface> kv in _tableDict) {
+            tasks.Enqueue( ()=> {
+                string fileName = kv.Key;
+                TextAsset asset = Resources.Load(filepath + fileName, typeof(TextAsset)) as TextAsset;
+                if (asset == null) {
+                    Debug.LogError("Table not found: " + fileName);
+                    return;
+                }
+                kv.Value.LoadTable(asset.text);
+            });
+        }
+    }
+
+    public void LoadTables (string filepath) {
+        foreach (KeyValuePair<string, ZTableInterface> kv in _tableDict) {
+            string fileName = kv.Key;
+            TextAsset asset = Resources.Load(filepath + fileName, typeof(TextAsset)) as TextAsset;
+            if (asset == null) {
+                Debug.LogError("Table not found: " + fileName);
+                continue;
+            }
+            kv.Value.LoadTable(asset.text);
+        }
+    }
+
+    {{each Tables table}}
+    private ZTable{{table.NameUpper}} _table{{table.NameUpper}}
+    public ZTable{{table.NameUpper}} Get{{table.NameUpper}} {
+        return _table{{table.NameUpper}}
+    }
+    public ZTable{{table.NameUpper}}.Entry Get{{table.NameUpper}}ByID(int id) {
+        return _table{{table.NameUpper}}.GetEntryByID(id)
+    }
+    {{/each}}
+}
+

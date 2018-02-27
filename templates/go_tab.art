@@ -1,0 +1,30 @@
+// This file is generaetd automatically, DO NOT modify this file manually. 
+
+package tables
+
+import "fairy"
+${bind "long=int64|float=float32|Array=[]$type|Map=map[$key]$val" }
+type {{NameUpper}} struct {
+{{each Fields field}}
+    {{field.Name | upperCamelCase}} {{field.Type}} // {{field.Desc}} 
+{{/each}}
+}
+
+var g{{NameUpper}}Vec []*{{NameUpper}}
+var g{{NameUpper}}Map map[{{IdType}}]*{{NameUpper}}
+
+func Load{{NameUpper}}(path string) {
+    fullpath := path + "/{{Name}}.tsv"
+    g{{NameUpper}}Vec = fairy.ReadTable(fullpath, {{NameUpper}}).([]*{{NameUpper}})
+    for _, record := range g{{NameUpper}}Vec {
+        g{{NameUpper}}Map[record.{{IdName | upperCamelCase}}] = record
+    }
+}
+
+func Get{{NameUpper}}Array() []*{{NameUpper}} {
+    return g{{NameUpper}}Vec
+}
+
+func Get{{NameUpper}}ById(id {{IdType}}) *{{NameUpper}} {
+    return g{{NameUpper}}Map[id]
+}

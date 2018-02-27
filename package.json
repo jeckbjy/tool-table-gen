@@ -1,0 +1,27 @@
+{
+  "name": "@zentertain/tool-table-gen",
+  "version": "1.0.0",
+  "description": "export excel table to csv",
+  "main": "./src/zapp.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://jeckbjy:bjy201314@github.com/jeckbjy/tool-table-gen.git"
+  },
+  "author": "jeckbjy",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jeckbjy/tool-table-gen/issues"
+  },
+  "homepage": "https://github.com/jeckbjy/tool-table-gen#readme",
+  "dependencies": {
+    "art-template": "^4.12.2",
+    "commander": "^2.14.1",
+    "google-spreadsheets": "^1.0.0",
+    "googleapis": "^2.1.3",
+    "mkdirp": "^0.5.1",
+    "xlsx": "^0.12.1"
+  }
+}

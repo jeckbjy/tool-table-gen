@@ -1,0 +1,67 @@
+// This file is generaetd automatically, DO NOT modify this file manually.
+using System;
+using System.Collections.Generic;
+using System.Collections;
+using System.IO;
+
+${bind "Array=$type[]|Map=Dictionary<$key,$val>" }
+[Serializable]
+public class ZTable{{NameUpper}}: ZTableInterface {
+    private const string TAB_FILE_DATA = "{{Name}}";
+
+    public string GetInstanceFile () {
+        return TAB_FILE_DATA;
+    }
+
+    public class Entry {
+        {{each Fields field}}
+        // {{field.Desc}}
+        private {{@field.Type}} _{{field.NameUpper}}
+        public {{@field.Type}} {{field.NameUpper}} { get { return _{{field.NameUpper}}} }
+        {{/each}}
+
+        public void Load(string[] cells) {
+            {{each Fields field}}
+            ReadField(cells[{{field.Index}}], ref _{{field.NameUpper}})
+            {{/each}}
+        }
+    }
+
+    private List<Entry> _entries = new List<Entry>();
+
+    public List<Entry> entries {
+        get { return _entries; }
+    }
+
+    private Dictionary<int, Entry> _entryByID = new Dictionary<int, Entry>();
+
+    public Entry GetEntryByID(int id) {
+        Entry entry = null;
+        if (_entryByID.TryGetValue(id, out entry)) {
+            return entry;
+        } else {
+            return null;
+        }
+    }
+
+    public void LoadTable (string content) {
+        string[] dataRows = content.Split('\n');
+        _entries.Clear();
+        _entryByID.Clear();
+        foreach (string line in dataRows) {
+            if(String.IsNullOrEmpty(line)) continue;
+            string[] strCol = line.Split('\t');
+
+            if (string.IsNullOrEmpty (strCol[0])) {
+                throw ZTableException.ErrorReader ("Read File {0} as key is Empty Fail!!!", GetInstanceFile ());
+            }
+
+            Entry entry = new Entry ();
+            entry.Load(strCol);
+            
+            _entryByID.Add(int.Parse(strCol[0]), entry);
+            
+            _entries.Add(entry);
+        }
+    }
+}
