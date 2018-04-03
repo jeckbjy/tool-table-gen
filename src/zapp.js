@@ -65,6 +65,7 @@ function parse_argv() {
     build_config()
 }
 
+// TODO:内置一些语言的默认配置
 function build_config() {
     if(!zutil.isEmpty(zconf.array_join)) {
         JOIN_SEP = zconf.array_join

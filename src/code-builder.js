@@ -64,7 +64,7 @@ function build_code(render, table, fullpath, lang_key) {
         cfield.Type = field.getType(lang_key)
         cfield.Desc = field.desc
         cfield.Index = field.indexField
-        console.log('field', cfield)
+        // console.log('field', cfield)
 
         content.NameLenMax = Math.max(content.NameLenMax, cfield.Name.length)
         content.TypeLenMax = Math.max(content.TypeLenMax, cfield.Type.length)
