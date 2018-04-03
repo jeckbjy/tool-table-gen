@@ -1,3 +1,5 @@
+const path = require('path')
+
 function upperCamelCase(value) {
     var ret = "";
     var upper = true;
@@ -206,6 +208,14 @@ function isAlpha(aChar) {
     return false;
 }
 
+function getAbsolutePath(file) {
+    if(!path.isAbsolute(file)) {
+        return path.join(process.cwd(), file)
+    } else {
+        return file
+    }
+}
+
 module.exports = {
     upperCamelCase,
     lowerCamelCase,
@@ -221,5 +231,6 @@ module.exports = {
     isGraph,
     isAlnum,
     isDigit,
-    isAlpha
+    isAlpha,
+    getAbsolutePath
 }

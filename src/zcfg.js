@@ -1,4 +1,4 @@
-var config = {
+module.exports = {
     //
     xlsx: {
         // 多个路径,或文件名
@@ -32,5 +32,3 @@ var config = {
     // 默认合并数组时分隔符
     array_join:'|'
 }
-
-module.exports = config

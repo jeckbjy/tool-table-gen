@@ -25,8 +25,7 @@ function parse_argv() {
     
     // load config
     if(program.config) {
-        var cfg_path = path.join(process.cwd(), program.config)
-        conf = require(cfg_path)
+        conf = require(zutil.getAbsolutePath(program.config))
         zutil.deepCopy(zconf, conf)
     }
 
