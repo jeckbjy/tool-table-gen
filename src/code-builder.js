@@ -150,7 +150,7 @@ function build(tables, cfg) {
         var render = template.compile(source)
         var fullpath = path.join(cfg_path, cfg_mgr_name + '.'+ cfg_type)
         var data = render(content_mgr)
-        console.log('  ->save   mgr:', path.basename(fullpath))
+        console.log('  ->save  mgr:', path.basename(fullpath))
         fs.writeFile(fullpath, data, (err)=>{
             if(err){
                 console.log('save table mgr code fail!', fullpath)

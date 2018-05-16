@@ -6,7 +6,7 @@ if [ ! -d "node_modules" ]; then
   npm i
 fi
 
-node src/zapp.js $*
-
 popd > /dev/null
 
+# 不修改工作目录
+node ${DIR}/../src/zapp.js $*
