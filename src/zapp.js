@@ -9,85 +9,157 @@ const zutil = require('./zutil')
 const path = require('path')
 const fs = require('fs')
 const process = require('process')
+const yaml = require('js-yaml');
 
 function parse_argv() {
     program
         .version('0.0.1')
         .option('-c, --config <n>', 'config path')
-        .option('-x, --xlsx <n>', 'xlsx path')
-        // .option('-g --gdoc', 'gdoc')
-        .option('-s, --spreadsheet_key <n>', "gdoc spreadsheet_key")
-        .option('-o, --output <n>', 'output path')        
-        .option('-d, --data_type <n>', 'data type array, split by |')
-        .option('-e, --code_type <n>', 'code type array, split by |')
-        .option('-t, --template <n>', 'template path')
+        .option('-k, --key <n>', 'config key')
         .parse(process.argv);
-    
-    // load config
-    if(program.config) {
-        conf = require(zutil.getAbsolutePath(program.config))
-        zutil.deepCopy(zconf, conf)
-    }
 
-    if(program.xlsx) {
-        zconf.xlsx.path.push(program.xlsx)
-    }
-
-    if(program.spreadsheet_key) {
-        zconf.gdoc.spreadsheet_key.push(program.spreadsheet_key)
-    }
-
-    var output = zconf.output
-    if(program.output) {
-        output.path = program.output
-    }
-
-    if(program.data_type) {
-        tokens = program.data_type.split('|').filter(String)
-        tokens.forEach((type)=>{
-            output.data.push({type:type.trim()})
-        })
-    }
-
-    if(program.code_type) {
-        tokens = program.code_type.split('|').filter(String)
-        tokens.forEach((type)=>{
-            output.code.push({type:type.trim()})
-        })
-    }
-
-    if(program.template) {
-        tokens = program.template.split('|').filter(String)
-        output.templates = output.templates.concat(tokens)
-    }
-
+    load_config(program.config, program.key)
     build_config()
+    // console.log(JSON.stringify(zconf, null, 4));    
 }
 
-// TODO:内置一些语言的默认配置
+// 拷贝配置文件,数组会覆盖
+function copy_conf(dst, src) {
+    for (var k in src) {
+        var datas = src[k]
+        var datad = dst[k]
+
+        var types = typeof datas
+        var typed = typeof datad
+
+        if (Array.isArray(datas) && Array.isArray(datad)) {
+            dst[k] = datas
+            // console.log(k)
+            // console.log(dst[k])
+        } else if (typed === 'object' && types === 'object') {
+            // 继续拷贝
+            copy_conf(datad, datas)
+        } else {
+            dst[k] = datas
+        }
+    }
+}
+
+// 加载配置文件
+function load_config(filename, key) {
+    // 如何没有指定config,会自动从当前工作目录查找conf.yaml文件
+    if(zutil.isEmpty(filename)) {
+        filename = './conf.yaml'
+    }
+
+    filename = zutil.getAbsolutePath(filename)
+    if(!fs.existsSync(filename)) {
+        return
+    }
+
+    var contents = fs.readFileSync(filename, 'utf8')
+    var data = yaml.load(contents)
+    // 查找全局配置
+    var globalConf = data['conf']
+    if (globalConf != undefined) {
+        copy_conf(zconf, globalConf)
+    }
+
+    if(key == undefined) {
+        return
+    }
+
+    var specialConf = data[key]
+    if(specialConf != undefined) {
+        copy_conf(zconf, specialConf)
+    }
+}
+
+// 解析名字${name|upper} ->$name,upper
+function parse_name(item) {
+    var name = item.name
+    
+    item.name_kind = 'raw'
+    if(zutil.isEmpty(item.name)) {
+        item.name = '$name'
+        return
+    }
+
+    // $name
+    if(name.indexOf('$name') != -1) {
+        return
+    }
+
+    // ${name|filter}
+    var start = name.indexOf("${")
+    if(start == -1) {
+        return
+    }
+
+    var end = name.indexOf("}", start)
+    if(end == -1) {
+        console.log('parse name format fail!', name)
+        return
+    }
+
+    item.name = name.substr(0, start) + "$name" + name.substr(end + 1)
+    var splitIndex = name.indexOf('|')
+    if(splitIndex != -1) {
+        item.name_kind = name.substr(splitIndex+1, end - splitIndex -1).trim()
+    }
+
+    // console.log("item.name", item.name, item.name_kind)
+}
+
+// 设置默认配置
 function build_config() {
     if(!zutil.isEmpty(zconf.array_join)) {
         JOIN_SEP = zconf.array_join
     }
     
     var output = zconf.output
+    if(output.path == "") {
+        output.path = "./build/output/"
+    }
     
     if(!output.path.endsWith('/')) {
         output.path += '/'
     }
 
+    // add defaults templates
+    output.templates.push(__dirname + "/../templates/")
+
+    // copy data conf
+    output.data = []
+    output.code = []
+
+    // 合并data配置
+    for(var idx in output.data_out) {
+        var type = output.data_out[idx]
+        var item = {}
+        item.type = type
+        zutil.deepCopy(item, output.data_tpl[type])
+        output.data.push(item)
+    }
+    delete output.data_out
+    delete output.data_tpl
+    // 合并code配置
+    for(var idx in output.code_out) {
+        var type = output.code_out[idx]        
+        var item = {}
+        item.type = type
+        zutil.deepCopy(item, output.code_tpl[type])
+        output.code.push(item)
+    }
+    delete output.code_out
+    delete output.code_tpl
+
     // build data
     output.data.map((item)=>{
+        parse_name(item)
+        
         if(zutil.isEmpty(item.path)) {
             item.path = path.join(output.path, 'data-'+item.type)            
-        }
-
-        if(zutil.isEmpty(item.name)) {
-            item.name = '$name'
-        }
-
-        if(zutil.isEmpty(item.name_kind)) {
-            item.name_kind = 'raw'
         }
 
         return item
@@ -95,16 +167,10 @@ function build_config() {
 
     // build code
     output.code.map((item)=>{
+        parse_name(item)
+        
         if(zutil.isEmpty(item.path)) {
             item.path = path.join(output.path, 'code-'+item.type)
-        }
-
-        if(zutil.isEmpty(item.name)) {
-            item.name = '$name'
-        }
-
-        if(zutil.isEmpty(item.name_kind)) {
-            item.name_kind = 'raw'
         }
 
         if(zutil.isEmpty(item.tab_tpl)) {
@@ -123,6 +189,7 @@ function build_config() {
     })
 }
 
+// 查找art目标目录
 function find_tpl(name) {
     var dirs = zconf.output.templates
     // console.log('dirs',dirs)
@@ -137,6 +204,7 @@ function find_tpl(name) {
     return name
 }
 
+// 构建所有table成promises
 function build_tables() {
     var promises = []
     zconf.xlsx.path.forEach((path)=>{
@@ -145,13 +213,14 @@ function build_tables() {
     })
 
     zconf.gdoc.spreadsheet_key.forEach((key)=>{
-        results = gdoc.build(zconf.gdoc.auth, key)
+        results = gdoc.build(zconf.gdoc, key)
         promises = promises.concat(results)
     })
 
     return promises
 }
 
+// 检查table合法性
 function check_tables(tables) {
     console.log('')
     console.log('start build tables:', 'count='+tables.length)

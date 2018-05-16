@@ -1,5 +1,6 @@
 const path = require('path')
 
+// 转换成大驼峰命名法
 function upperCamelCase(value) {
     var ret = "";
     var upper = true;
@@ -20,6 +21,7 @@ function upperCamelCase(value) {
     return ret;
 }
 
+// 转换成小驼峰命名法
 function lowerCamelCase(value) {
     var upper = upperCamelCase(value)
     return upper.charAt(0).toLowerCase() + upper.substring(1)
@@ -127,6 +129,10 @@ function buildName(name, kind) {
  * @param {Object} src 
  */
 function deepCopy(dst, src) {
+    if(src == undefined || src == null) {
+        return
+    }
+    
     for (var k in src) {
         var datas = src[k]
         var datad = dst[k]

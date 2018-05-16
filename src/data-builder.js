@@ -66,6 +66,9 @@ function get_func(ext) {
     return null
 }
 
+// 根据配置输出数据
+// tables所有要输出的表格
+// cfg配置见zcfg中
 function build(tables, cfg) {
     console.log('')    
     console.log('start build data:')
@@ -82,7 +85,7 @@ function build(tables, cfg) {
         }
         mkdirp.sync(cfg_path)
 
-        console.log('  =====> '+cfg_type)
+        console.log('=====> '+cfg_type)
         tables.forEach((table)=>{
             var tabname = zutil.buildName(table.name, cfg_name_kind)            
             var realname = cfg_name.replace('$name', tabname)

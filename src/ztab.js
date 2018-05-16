@@ -1,19 +1,22 @@
+// 用于转化sheet到二维表格,解析表头,表格内容,以及数据合并
 const zutil = require('./zutil')
 
 const JOIN_SEP = '|'
 
-const TYPE_INT = 'INT'
-const TYPE_BOOL = 'BOOL'
-const TYPE_LONG = 'LONG'
-const TYPE_FLOAT = 'FLOAT'
-const TYPE_STRING = 'STRING'
-const TYPE_ARRAY = 'ARRAY'
-const TYPE_ARRAY2 = 'ARRAY2'
-const TYPE_MAP = 'MAP'
-const TYPE_ENUM = 'ENUM'
-const TYPE_DATE = 'DATE'
-const TYPE_CLOCK = 'CLOCK'
+// 表头数据类型定义
+const TYPE_INT      = 'INT'
+const TYPE_BOOL     = 'BOOL'
+const TYPE_LONG     = 'LONG'
+const TYPE_FLOAT    = 'FLOAT'
+const TYPE_STRING   = 'STRING'
+const TYPE_ARRAY    = 'ARRAY'
+const TYPE_ARRAY2   = 'ARRAY2'
+const TYPE_MAP      = 'MAP'
+const TYPE_ENUM     = 'ENUM'
+const TYPE_DATE     = 'DATE'
+const TYPE_CLOCK    = 'CLOCK'
 
+// 数据类型映射到模板中名字
 const gTypeMap = {
     'INT': 'int',
     'BOOL': 'bool',
@@ -28,6 +31,7 @@ const gTypeMap = {
     'CLOCK': 'string',
 }
 
+// 表格cell为空(undefined)时,默认数据类型
 function getDefault(type) {
     switch (type) {
         case TYPE_BOOL:
@@ -41,6 +45,7 @@ function getDefault(type) {
     }
 }
 
+// 是否是数值类型
 function isNumberType(type) {
     switch (type) {
         case TYPE_INT:
@@ -53,6 +58,7 @@ function isNumberType(type) {
     }
 }
 
+// 是否是基础类型,非时间,容器等类型
 function isBasicType(type) {
     switch (type) {
         case TYPE_INT:
@@ -66,9 +72,7 @@ function isBasicType(type) {
     }
 }
 
-/** 
- * 头信息
- */
+// 表头中一个字段信息
 class Field {
     constructor(index, name, type, desc) {
         this.rawName = name
